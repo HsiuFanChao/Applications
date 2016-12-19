@@ -22,7 +22,30 @@ import tw.chao.steven.application.R;
 public class CalculatorActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
-    private int mCurrentFrag = 0;
+    private static class FragmentFactory {
+        public static final int CALCULATOR_FRAG = 0;
+        public static final int CURRENCY_CONVERTER_FRAG = 1;
+
+        public static Fragment getFragment(int frag) {
+            Fragment fragment = null;
+            switch (frag) {
+                case CALCULATOR_FRAG:
+                    fragment = CalculatorFragment.newInstance();
+                    break;
+                case CURRENCY_CONVERTER_FRAG:
+                    fragment = new CurrencyConverterFragment();
+                    break;
+                default:
+                    break;
+            }
+            return fragment;
+        }
+    }
+
+    private static final String KEY_CURRENT_FRAG = "key_current_frag";
+
+    private int mCurrentFrag = FragmentFactory.CALCULATOR_FRAG;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,17 +54,12 @@ public class CalculatorActivity extends AppCompatActivity
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-//        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-//        fab.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-//                        .setAction("Action", null).show();
-//            }
-//        });
         if(savedInstanceState != null) {
-
+            mCurrentFrag = savedInstanceState.getInt(KEY_CURRENT_FRAG,
+                    FragmentFactory.CALCULATOR_FRAG);
         }
+
+        replaceFragment(FragmentFactory.getFragment(mCurrentFrag));
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -51,8 +69,12 @@ public class CalculatorActivity extends AppCompatActivity
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
-        Log.d("CalculatorActivity", "header count=" + navigationView.getHeaderCount());
-        //navigationView.setItemBackground(null);
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putInt(KEY_CURRENT_FRAG, mCurrentFrag);
     }
 
     @Override
@@ -93,23 +115,25 @@ public class CalculatorActivity extends AppCompatActivity
         // Handle navigation view item clicks here.
         int id = item.getItemId();
 
-        Fragment fragment = null;
-
         // Create a new fragment and specify the planet to show based on position
         if (id == R.id.nav_calculator) {
-            fragment = CalculatorFragment.newInstance();
+            mCurrentFrag = FragmentFactory.CALCULATOR_FRAG;
         } else if (id == R.id.nav_currency) {
-            fragment = new CurrencyConverterFragment();
+            mCurrentFrag = FragmentFactory.CURRENCY_CONVERTER_FRAG;
         }
 
-        // Insert the fragment by replacing any existing fragment
-        FragmentManager fragmentManager = getFragmentManager();
-        fragmentManager.beginTransaction()
-                .replace(R.id.content_calculator, fragment)
-                .commit();
+        replaceFragment(FragmentFactory.getFragment(mCurrentFrag));
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    private void replaceFragment(Fragment frag) {
+        // Insert the fragment by replacing any existing fragment
+        FragmentManager fragmentManager = getFragmentManager();
+        fragmentManager.beginTransaction()
+                .replace(R.id.content_calculator, frag)
+                .commit();
     }
 }

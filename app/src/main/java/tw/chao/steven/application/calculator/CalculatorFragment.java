@@ -1,12 +1,13 @@
 package tw.chao.steven.application.calculator;
 
 import android.app.Fragment;
-import android.content.Context;
-import android.net.Uri;
 import android.os.Bundle;
+import android.support.v7.widget.GridLayout;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
+import android.widget.TextView;
 
 import tw.chao.steven.application.R;
 
@@ -15,15 +16,14 @@ import tw.chao.steven.application.R;
  * Use the {@link CalculatorFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class CalculatorFragment extends Fragment {
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
+public class CalculatorFragment extends Fragment implements View.OnClickListener {
 
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
+    private static final String TAG = "CalculatorFragment";
+    private TextView mResultView = null;
+    private EditText mEditText = null;
+
+    private UserInputHandler mUserInputHandler = null;
+    private CalculationCompleteListener mListener = null;
 
     public CalculatorFragment() {
         // Required empty public constructor
@@ -43,16 +43,71 @@ public class CalculatorFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
+            //mParam1 = getArguments().getString(ARG_PARAM1);
+            //mParam2 = getArguments().getString(ARG_PARAM2);
         }
+
+        mListener = new CalculationCompleteListener() {
+            @Override
+            public void onCalculationComplete(float result) {
+                mResultView.setText(Float.toString(result));
+            }
+        };
+
+        mUserInputHandler = new UserInputHandlerImpl(mListener);
+
+        String res = "5+5*(4/2)-7+1";
+        System.out.println(engine.eval(res));
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_calculator, container, false);
+        View rootView = inflater.inflate(R.layout.fragment_calculator, container, false);
+
+        mEditText = (EditText) rootView.findViewById(R.id.editText);
+        mResultView = (TextView) rootView.findViewById(R.id.textView2);
+
+        GridLayout gridLayout = (GridLayout) rootView.findViewById(R.id.grid);
+        for(int i=0; i < gridLayout.getChildCount(); ++i) {
+            gridLayout.getChildAt(i).setOnClickListener(this);
+        }
+
+        TextView tv;
+        tv = (TextView) gridLayout.findViewById(R.id.button);tv.setTag(new FunctionClear(tv.getText()));
+        tv = (TextView) gridLayout.findViewById(R.id.button2);tv.setTag(new UnaryOperator(tv.getText()));
+        tv = (TextView) gridLayout.findViewById(R.id.button3);tv.setTag(new BinaryOperator(tv.getText()));
+        tv = (TextView) gridLayout.findViewById(R.id.button4);tv.setTag(new FunctionDel(tv.getText()));
+
+        tv = (TextView) gridLayout.findViewById(R.id.button5);tv.setTag(new Number(tv.getText()));
+        tv = (TextView) gridLayout.findViewById(R.id.button6);tv.setTag(new Number(tv.getText()));
+        tv = (TextView) gridLayout.findViewById(R.id.button7);tv.setTag(new Number(tv.getText()));
+        tv = (TextView) gridLayout.findViewById(R.id.button8);tv.setTag(new BinaryOperator(tv.getText()));
+
+        tv = (TextView) gridLayout.findViewById(R.id.button9);tv.setTag(new Number(tv.getText()));
+        tv = (TextView) gridLayout.findViewById(R.id.button10);tv.setTag(new Number(tv.getText()));
+        tv = (TextView) gridLayout.findViewById(R.id.button11);tv.setTag(new Number(tv.getText()));
+        tv = (TextView) gridLayout.findViewById(R.id.button12);tv.setTag(new BinaryOperator(tv.getText()));
+
+        tv = (TextView) gridLayout.findViewById(R.id.button13);tv.setTag(new Number(tv.getText()));
+        tv = (TextView) gridLayout.findViewById(R.id.button14);tv.setTag(new Number(tv.getText()));
+        tv = (TextView) gridLayout.findViewById(R.id.button15);tv.setTag(new Number(tv.getText()));
+        tv = (TextView) gridLayout.findViewById(R.id.button16);tv.setTag(new BinaryOperator(tv.getText()));
+
+        tv = (TextView) gridLayout.findViewById(R.id.button17);tv.setTag(new Number(tv.getText()));
+        tv = (TextView) gridLayout.findViewById(R.id.button18);tv.setTag(new Dot(tv.getText()));
+        tv = (TextView) gridLayout.findViewById(R.id.button19);tv.setTag(new Equal(tv.getText()));
+        tv = (TextView) gridLayout.findViewById(R.id.button20);tv.setTag(new BinaryOperator(tv.getText()));
+        return rootView;
     }
 
+    //@Override
+    public void onClick(View view) {
+
+        CalculatorButton btn = (CalculatorButton) view.getTag();
+        btn.accept(mUserInputHandler);
+
+        mEditText.setText(mUserInputHandler.getProcessedUserInput());
+    }
 }
